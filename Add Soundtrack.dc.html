@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-c1c5dd0e-3a81-41ad-92d8-d120963e4bd7/styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&amp;family=Barlow+Condensed:wght@400;600&amp;display=swap">
+<style>html,body{margin:0;background:#f2f2f3;color:#1d1f20}a{color:#416180}a:hover{color:#2c455d}</style>
+</helmet>
+<div style="min-height:100vh;box-sizing:border-box;padding:48px 24px;display:flex;justify-content:center;font-family:'Barlow',system-ui,sans-serif;background-image:linear-gradient(#d6ebff 1px,transparent 1px),linear-gradient(90deg,#d6ebff 1px,transparent 1px);background-size:48px 48px">
+  <div style="width:100%;max-width:640px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #b5d9fd;padding-bottom:12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:0.18em;font-size:15px">
+      <span>MACHINE V</span><span style="color:#416180">REEL · SOUNDTRACK</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h1 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:64px;line-height:0.95">Add sound to your export</h1>
+      <p style="margin:0;font-size:17px;line-height:1.5;color:#416180;text-wrap:pretty">The video export records picture only. Drop the exported MP4 here and this page plays it back in real time with the engine-and-music soundtrack laid under it, then gives you one file with sound. It takes about 40 seconds.</p>
+    </div>
+
+    <label onDragOver="{{ onDragOver }}" onDrop="{{ onDrop }}" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:180px;border:1.5px dashed #749dc4;cursor:pointer;padding:24px;text-align:center" style-hover="background:#eef6ff">
+      <input type="file" accept="video/*" onChange="{{ onPick }}" style="display:none">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:28px;letter-spacing:0.04em">{{ dropTitle }}</span>
+      <span style="font-size:15px;color:#416180">{{ dropSub }}</span>
+    </label>
+
+    <div style="position:relative;border:1.5px solid #b5d9fd;padding:20px;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.2em;color:#416180">STATUS</span>
+          <span style="font-size:17px">{{ status }}</span>
+        </div>
+        <button onClick="{{ run }}" disabled="{{ cantRun }}" style="background:#5980a6;color:#f2f2f3;border:0;padding:14px 28px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:20px;letter-spacing:0.06em;cursor:pointer;opacity:{{ runOpacity }}" style-hover="background:#416180">{{ runLabel }}</button>
+      </div>
+      <div style="height:6px;background:#d6ebff"><div style="height:100%;background:#5980a6;width:{{ pct }}"></div></div>
+      <sc-if value="{{ outUrl }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <video src="{{ outUrl }}" controls playsinline style="width:100%;max-height:520px;background:#1d2d3d"></video>
+          <a href="{{ outUrl }}" download="{{ outName }}" style="align-self:flex-start;background:#5980a6;color:#f2f2f3;padding:14px 28px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:20px;letter-spacing:0.06em;text-decoration:none" style-hover="background:#416180">Download {{ outName }}</a>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:15px;color:#416180">
+      <a href="reel-audio.wav" download="machine-v-reel-soundtrack.wav">Download soundtrack only (WAV)</a>
+      <a href="Machine V Reel.dc.html">Back to the reel</a>
+    </div>
+    <video ref="{{ srcRef }}" muted playsinline style="position:absolute;width:2px;height:2px;opacity:0;pointer-events:none"></video>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { file: null, busy: false, prog: 0, status: 'Waiting for the exported MP4.', outUrl: null, outName: '' };
+  srcRef = React.createRef();
+  setFile(f) {
+    if (!f) return;
+    if (this.state.outUrl) URL.revokeObjectURL(this.state.outUrl);
+    this.setState({ file: f, outUrl: null, prog: 0, status: 'Ready. Keep this tab in front while it records.' });
+  }
+  pickMime() {
+    const c = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'];
+    return c.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || '';
+  }
+  async run() {
+    const f = this.state.file, v = this.srcRef.current; if (!f || !v || this.state.busy) return;
+    this.setState({ busy: true, prog: 0, status: 'Loading soundtrack…' });
+    try {
+      const ac = new AudioContext({ sampleRate: 44100 });
+      const wav = await ac.decodeAudioData(await (await fetch('reel-audio.wav')).arrayBuffer());
+      const vurl = URL.createObjectURL(f);
+      v.src = vurl; v.muted = true; v.currentTime = 0;
+      await new Promise((r, j) => { v.onloadeddata = r; v.onerror = () => j(new Error('This file could not be read as a video.')); });
+      const dest = ac.createMediaStreamDestination();
+      const vs = v.captureStream ? v.captureStream() : v.mozCaptureStream();
+      const stream = new MediaStream([...vs.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+      const mime = this.pickMime();
+      const rec = new MediaRecorder(stream, { mimeType: mime || undefined, videoBitsPerSecond: 16e6, audioBitsPerSecond: 256e3 });
+      const chunks = []; rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+      const done = new Promise(r => rec.onstop = r);
+      this.setState({ status: 'Recording with sound — keep this tab visible…' });
+      await ac.resume();
+      rec.start(250);
+      const src = ac.createBufferSource(); src.buffer = wav; src.connect(dest);
+      await v.play();
+      src.start(ac.currentTime, Math.min(v.currentTime, wav.duration));
+      const dur = v.duration || wav.duration;
+      const tick = setInterval(() => this.setState({ prog: Math.min(1, v.currentTime / dur) }), 200);
+      await new Promise(r => { v.onended = r; });
+      clearInterval(tick);
+      await new Promise(r => setTimeout(r, 150));
+      rec.stop(); src.stop(); await done; ac.close(); URL.revokeObjectURL(vurl);
+      const type = (mime || 'video/webm').split(';')[0], ext = type.includes('mp4') ? 'mp4' : 'webm';
+      const out = URL.createObjectURL(new Blob(chunks, { type }));
+      this.setState({ busy: false, prog: 1, outUrl: out, outName: 'machine-v-reel-with-sound.' + ext, status: ext === 'mp4' ? 'Done — MP4 with sound.' : 'Done — this browser can only record WebM; convert to MP4 if your platform needs it.' });
+    } catch (e) {
+      this.setState({ busy: false, status: 'Failed: ' + (e && e.message || e) });
+    }
+  }
+  renderVals() {
+    const s = this.state;
+    return {
+      srcRef: this.srcRef,
+      dropTitle: s.file ? s.file.name : 'Drop the exported MP4',
+      dropSub: s.file ? (s.file.size / 1048576).toFixed(1) + ' MB · click to choose another' : 'or click to choose a file',
+      onPick: e => this.setFile(e.target.files && e.target.files[0]),
+      onDragOver: e => e.preventDefault(),
+      onDrop: e => { e.preventDefault(); this.setFile(e.dataTransfer.files && e.dataTransfer.files[0]); },
+      status: s.status,
+      run: () => this.run(),
+      cantRun: !s.file || s.busy,
+      runOpacity: !s.file || s.busy ? 0.45 : 1,
+      runLabel: s.busy ? 'Recording…' : s.outUrl ? 'Record again' : 'Add soundtrack',
+      pct: Math.round(s.prog * 100) + '%',
+      outUrl: s.outUrl,
+      outName: s.outName,
+    };
+  }
+}
+</script>
+</body>
+</html>

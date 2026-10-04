@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3.6L Pentastar V6 — Dodge Challenger</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<link rel="stylesheet" href="_ds/industry-c1c5dd0e-3a81-41ad-92d8-d120963e4bd7/styles.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--color-bg); overflow: hidden; }
+  a { color: var(--color-accent-700); } a:hover { color: var(--color-accent-900); }
+  three-d-stage { width: 100vw; height: 100vh; }
+  three-d-stage:not(:defined) { visibility: hidden; }
+  .plate { position: absolute; top: var(--space-5, 20px); left: var(--space-5, 20px); max-width: 300px; pointer-events: none; }
+  .plate .card-title { font-family: var(--font-heading); font-size: 30px; line-height: 1; text-transform: uppercase; margin: 4px 0 10px; }
+  .specs { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0; font-family: var(--font-body); font-size: 13px; color: var(--color-text); }
+  .specs dt { color: var(--color-accent-700); text-transform: uppercase; letter-spacing: .04em; font-size: 11px; align-self: center; }
+  .specs dd { margin: 0; }
+</style>
+</head>
+<body>
+<three-d-stage name="challenger-pentastar-3.6-v6" background="#f2f2f3" autorotate></three-d-stage>
+<div class="card blueprint plate">
+  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+  <div class="card-kicker">Dodge Challenger SXT / GT</div>
+  <div class="card-title">3.6L Pentastar V6</div>
+  <dl class="specs">
+    <dt>Layout</dt><dd>60° V6, DOHC 24-valve</dd>
+    <dt>Displacement</dt><dd>3,604 cc</dd>
+    <dt>Bore × stroke</dt><dd>96 × 83 mm</dd>
+    <dt>Output</dt><dd>303 hp · 268 lb-ft</dd>
+    <dt>Construction</dt><dd>Aluminum block &amp; heads</dd>
+  </dl>
+</div>
+<script src="three-d-stage.js"></script>
+<script type="module">
+const stage = document.querySelector('three-d-stage');
+const { THREE } = await stage.ready;
+
+const M = (name, color, roughness, metalness) => {
+  const m = new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  m.name = name; return m;
+};
+const aluminum = M('cast_aluminum', 0xbfc3c7, 0.55, 0.3);
+const composite = M('black_composite', 0x2b2d30, 0.62, 0.05);
+const steel = M('machined_steel', 0x9aa0a6, 0.32, 0.4);
+const iron = M('dark_iron', 0x55595e, 0.5, 0.35);
+const rubber = M('rubber', 0x161718, 0.9, 0.0);
+const accent = M('steel_blue', 0x5980a6, 0.45, 0.1);
+
+const engine = new THREE.Group(); engine.name = 'pentastar_3_6_v6';
+const mesh = (name, geo, mat, parent = engine) => {
+  const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = true; m.receiveShadow = true;
+  parent.add(m); return m;
+};
+const zCyl = (r, len, seg = 48) => new THREE.CylinderGeometry(r, r, len, seg).rotateX(Math.PI / 2);
+const roundedRect = (w, h, r) => {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s;
+};
+const extrudeZ = (shape, depth, bevel = 0.004) => {
+  const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2, curveSegments: 16 });
+  g.translate(0, 0, -depth / 2); return g;
+};
+
+const CRANK_Y = 0.22, BORE_PITCH = 0.104, STAGGER = 0.022;
+
+// Oil pan
+{
+  const s = new THREE.Shape();
+  s.moveTo(-0.17, 0.10); s.lineTo(0.17, 0.10); s.lineTo(0.15, 0.03);
+  s.quadraticCurveTo(0.14, 0.0, 0.11, 0.0); s.lineTo(-0.11, 0.0);
+  s.quadraticCurveTo(-0.14, 0.0, -0.15, 0.03); s.closePath();
+  mesh('oil_pan', extrudeZ(s, 0.44, 0.004).translate(0, 0.004, 0), aluminum);
+  mesh('oil_pan_rail', new THREE.BoxGeometry(0.36, 0.012, 0.47).translate(0, 0.108, 0), aluminum);
+  mesh('drain_plug', new THREE.CylinderGeometry(0.009, 0.009, 0.01, 6).translate(0.05, 0.0, -0.1), steel);
+}
+
+// Lower block / crankcase
+mesh('block_crankcase', new THREE.BoxGeometry(0.34, 0.18, 0.46).translate(0, 0.203, 0), aluminum);
+for (const x of [-1, 1]) for (const y of [0.16, 0.24]) {
+  mesh(`block_rib_${x > 0 ? 'R' : 'L'}_${y}`, new THREE.BoxGeometry(0.008, 0.012, 0.44).translate(x * 0.172, y, 0), aluminum);
+}
+for (const x of [-1, 1]) {
+  mesh(`engine_mount_${x > 0 ? 'R' : 'L'}`, new THREE.BoxGeometry(0.04, 0.08, 0.1).translate(x * 0.19, 0.22, 0.04), iron);
+}
+// Starter
+{
+  const st = new THREE.Group(); st.name = 'starter'; st.position.set(0.205, 0.13, -0.15); engine.add(st);
+  mesh('starter_motor', zCyl(0.042, 0.14), iron, st);
+  mesh('starter_solenoid', zCyl(0.022, 0.1).translate(0, 0.05, -0.01), iron, st);
+}
+
+// Cylinder banks (60° V)
+const buildBank = (side) => {
+  const bank = new THREE.Group(); const tag = side > 0 ? 'R' : 'L';
+  bank.name = `bank_${tag}`; bank.position.set(0, CRANK_Y, side * STAGGER);
+  bank.rotation.z = -side * Math.PI / 6; engine.add(bank);
+  mesh(`block_bank_${tag}`, new THREE.BoxGeometry(0.17, 0.2, 0.44).translate(0, 0.1, 0), aluminum, bank);
+  mesh(`cylinder_head_${tag}`, new THREE.BoxGeometry(0.205, 0.1, 0.47).translate(0, 0.25, 0), aluminum, bank);
+  mesh(`head_gasket_${tag}`, new THREE.BoxGeometry(0.2, 0.004, 0.46).translate(0, 0.2, 0), iron, bank);
+  // Cam cover: rounded-top section extruded along z
+  const cs = new THREE.Shape();
+  cs.moveTo(-0.1, 0.0); cs.lineTo(0.1, 0.0); cs.lineTo(0.1, 0.02);
+  cs.quadraticCurveTo(0.1, 0.05, 0.07, 0.052); cs.lineTo(-0.07, 0.052);
+  cs.quadraticCurveTo(-0.1, 0.05, -0.1, 0.02); cs.closePath();
+  mesh(`cam_cover_${tag}`, extrudeZ(cs, 0.44, 0.005).translate(0, 0.302, 0), composite, bank);
+  // Cam cover bolts
+  for (let i = 0; i < 6; i++) for (const bx of [-0.09, 0.09]) {
+    mesh(`cam_cover_bolt_${tag}_${i}_${bx > 0 ? 'o' : 'i'}`, new THREE.CylinderGeometry(0.006, 0.006, 0.008, 6).translate(bx, 0.33, -0.2 + i * 0.08), steel, bank);
+  }
+  // Coil-on-plug packs
+  for (let c = 0; c < 3; c++) {
+    const z = (c - 1) * BORE_PITCH;
+    mesh(`ignition_coil_${tag}${c + 1}`, new THREE.CylinderGeometry(0.018, 0.02, 0.03, 24).translate(0.035, 0.37, z), composite, bank);
+    mesh(`coil_connector_${tag}${c + 1}`, new THREE.BoxGeometry(0.025, 0.018, 0.03).translate(0.06, 0.37, z), accent, bank);
+  }
+  // Exhaust outlet from integrated manifold (rear, outboard)
+  const ex = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.1, 0.24, -0.17), new THREE.Vector3(0.15, 0.22, -0.19),
+    new THREE.Vector3(0.18, 0.14, -0.21), new THREE.Vector3(0.185, 0.04, -0.22),
+  ]);
+  mesh(`exhaust_outlet_${tag}`, new THREE.TubeGeometry(ex, 32, 0.028, 24, false), iron, bank);
+  mesh(`exhaust_flange_${tag}`, new THREE.BoxGeometry(0.012, 0.08, 0.08).translate(0.106, 0.245, -0.17), iron, bank);
+  mesh(`heat_shield_${tag}`, new THREE.BoxGeometry(0.004, 0.09, 0.36).translate(0.108, 0.25, 0.02), steel, bank);
+  // Oil fill cap (right bank)
+  if (side > 0) {
+    mesh('oil_fill_neck', new THREE.CylinderGeometry(0.022, 0.022, 0.02, 32).translate(-0.02, 0.36, 0.16), composite, bank);
+    mesh('oil_fill_cap', new THREE.CylinderGeometry(0.028, 0.028, 0.014, 32).translate(-0.02, 0.375, 0.16), accent, bank);
+  }
+  return bank;
+};
+buildBank(1); buildBank(-1);
+
+// Lower + upper intake
+mesh('lower_intake', new THREE.BoxGeometry(0.16, 0.08, 0.4).translate(0, 0.52, 0), aluminum);
+{
+  const intake = new THREE.Group(); intake.name = 'upper_intake'; engine.add(intake);
+  mesh('intake_plenum', extrudeZ(roundedRect(0.22, 0.1, 0.04), 0.4, 0.008).translate(0, 0.615, -0.01), composite, intake);
+  for (let i = 0; i < 4; i++) {
+    mesh(`plenum_rib_${i}`, new THREE.BoxGeometry(0.006, 0.01, 0.34).translate(-0.06 + i * 0.04, 0.673, -0.01), composite, intake);
+  }
+  mesh('badge_plate', extrudeZ(roundedRect(0.11, 0.06, 0.01), 0.004, 0.002).rotateX(-Math.PI / 2).translate(0, 0.672, 0.13), steel, intake);
+  for (const side of [-1, 1]) for (let c = 0; c < 3; c++) {
+    const z = (c - 1) * BORE_PITCH + side * STAGGER + 0.04;
+    const pts = [[0.09, 0.64], [0.19, 0.655], [0.245, 0.61], [0.225, 0.56], [0.13, 0.545], [0.07, 0.535]]
+      .map(([x, y]) => new THREE.Vector3(side * x, y, z));
+    mesh(`intake_runner_${side > 0 ? 'R' : 'L'}${c + 1}`, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, 0.021, 24, false), composite, intake);
+  }
+  // Throttle body, front of plenum
+  const tb = new THREE.Group(); tb.name = 'throttle_body'; tb.position.set(0.02, 0.615, 0.235); intake.add(tb);
+  mesh('throttle_housing', zCyl(0.042, 0.06), aluminum, tb);
+  mesh('throttle_inlet_ring', new THREE.TorusGeometry(0.042, 0.007, 16, 48).translate(0, 0, 0.03), aluminum, tb);
+  mesh('throttle_bore', zCyl(0.034, 0.002).translate(0, 0, 0.0305), iron, tb);
+  mesh('throttle_actuator', new THREE.BoxGeometry(0.05, 0.07, 0.05).translate(-0.06, -0.01, -0.005), composite, tb);
+}
+
+// Front timing cover
+const FRONT = 0.25;
+{
+  const s = new THREE.Shape();
+  [[-0.16, 0.085], [0.16, 0.085], [0.18, 0.26], [0.275, 0.46], [0.255, 0.5], [0.09, 0.585], [-0.09, 0.585], [-0.255, 0.5], [-0.275, 0.46], [-0.18, 0.26]]
+    .forEach(([x, y], i) => i ? s.lineTo(x, y) : s.moveTo(x, y));
+  s.closePath();
+  mesh('timing_cover', extrudeZ(s, 0.026, 0.004).translate(0, 0, FRONT + 0.013), aluminum);
+  // Cam phaser bulges (4)
+  for (const side of [-1, 1]) for (const lx of [-0.05, 0.05]) {
+    const a = -side * Math.PI / 6, ly = 0.265;
+    const x = lx * Math.cos(a) - ly * Math.sin(a), y = lx * Math.sin(a) + ly * Math.cos(a) + CRANK_Y;
+    mesh(`cam_phaser_cover_${side > 0 ? 'R' : 'L'}_${lx > 0 ? 'ex' : 'in'}`, zCyl(0.042, 0.016).translate(x, y, FRONT + 0.034), aluminum);
+  }
+  mesh('front_crank_seal', zCyl(0.05, 0.01).translate(0, CRANK_Y, FRONT + 0.032), iron);
+}
+
+// Rear flange + flexplate
+{
+  const s = new THREE.Shape();
+  [[-0.19, 0.06], [0.19, 0.06], [0.22, 0.26], [0.26, 0.42], [0.1, 0.5], [-0.1, 0.5], [-0.26, 0.42], [-0.22, 0.26]]
+    .forEach(([x, y], i) => i ? s.lineTo(x, y) : s.moveTo(x, y));
+  s.closePath();
+  mesh('bellhousing_flange', extrudeZ(s, 0.014, 0.003).translate(0, 0, -0.245), aluminum);
+  mesh('flexplate', zCyl(0.15, 0.006, 64).translate(0, CRANK_Y, -0.258), iron);
+  mesh('flexplate_hub', zCyl(0.04, 0.014).translate(0, CRANK_Y, -0.262), steel);
+}
+
+// Accessories
+const PZ = FRONT + 0.07;
+const pulleys = [
+  { name: 'crank_damper', x: 0, y: CRANK_Y, r: 0.09 },
+  { name: 'belt_tensioner', x: 0.17, y: 0.245, r: 0.035 },
+  { name: 'alternator_pulley', x: 0.3, y: 0.4, r: 0.032 },
+  { name: 'idler_pulley', x: 0.0, y: 0.49, r: 0.035 },
+  { name: 'water_pump_pulley', x: -0.16, y: 0.42, r: 0.06 },
+  { name: 'ac_compressor_pulley', x: -0.25, y: 0.2, r: 0.06 },
+];
+for (const p of pulleys) {
+  const g = new THREE.Group(); g.name = p.name; g.position.set(p.x, p.y, PZ); engine.add(g);
+  mesh(`${p.name}_groove`, zCyl(p.r - 0.001, 0.024, 64), steel, g);
+  mesh(`${p.name}_flange_f`, zCyl(p.r + 0.007, 0.004, 64).translate(0, 0, 0.014), steel, g);
+  mesh(`${p.name}_flange_r`, zCyl(p.r + 0.007, 0.004, 64).translate(0, 0, -0.014), steel, g);
+  mesh(`${p.name}_hub`, zCyl(Math.min(0.025, p.r * 0.45), 0.008).translate(0, 0, 0.019), iron, g);
+}
+mesh('crank_damper_ring', zCyl(0.085, 0.03, 64).translate(0, CRANK_Y, PZ - 0.03), iron);
+mesh('crank_bolt', new THREE.CylinderGeometry(0.012, 0.012, 0.01, 6).rotateX(Math.PI / 2).translate(0, CRANK_Y, PZ + 0.027), steel);
+mesh('tensioner_arm', new THREE.BoxGeometry(0.03, 0.09, 0.012).rotateZ(0.5).translate(0.15, 0.2, FRONT + 0.045), iron);
+mesh('water_pump_housing', zCyl(0.05, 0.04).translate(-0.16, 0.42, FRONT + 0.045), aluminum);
+mesh('idler_bracket', zCyl(0.02, 0.04).translate(0, 0.49, FRONT + 0.045), aluminum);
+{
+  const alt = new THREE.Group(); alt.name = 'alternator'; alt.position.set(0.3, 0.4, 0.2); engine.add(alt);
+  mesh('alternator_body', zCyl(0.075, 0.13), steel, alt);
+  mesh('alternator_front_frame', zCyl(0.07, 0.02).translate(0, 0, 0.075), aluminum, alt);
+  for (let i = 0; i < 5; i++) mesh(`alternator_fin_${i}`, new THREE.TorusGeometry(0.076, 0.003, 8, 48).translate(0, 0, -0.05 + i * 0.025), aluminum, alt);
+  mesh('alternator_bracket', new THREE.BoxGeometry(0.1, 0.03, 0.08).translate(-0.07, -0.05, 0), aluminum, alt);
+}
+{
+  const ac = new THREE.Group(); ac.name = 'ac_compressor'; ac.position.set(-0.25, 0.2, 0.17); engine.add(ac);
+  mesh('ac_compressor_body', zCyl(0.068, 0.17), aluminum, ac);
+  mesh('ac_clutch', zCyl(0.062, 0.03).translate(0, 0, 0.1), steel, ac);
+  mesh('ac_manifold_block', new THREE.BoxGeometry(0.05, 0.03, 0.06).translate(-0.02, 0.075, -0.03), aluminum, ac);
+}
+
+// Serpentine belt: offset hull around pulleys (listed CCW)
+{
+  const T = 0.007, arcs = [];
+  const n = pulleys.length;
+  const tangentAngle = (a, b) => {
+    const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy);
+    return Math.atan2(dy, dx) - Math.acos((a.r - b.r) / L);
+  };
+  for (let i = 0; i < n; i++) {
+    const prev = pulleys[(i - 1 + n) % n], cur = pulleys[i], next = pulleys[(i + 1) % n];
+    let a0 = tangentAngle(prev, cur), a1 = tangentAngle(cur, next);
+    while (a1 < a0) a1 += Math.PI * 2;
+    arcs.push({ p: cur, a0, a1 });
+  }
+  const ring = (rOff) => {
+    const pts = [];
+    for (const { p, a0, a1 } of arcs) {
+      const steps = Math.max(4, Math.ceil((a1 - a0) / 0.08));
+      for (let k = 0; k <= steps; k++) {
+        const a = a0 + (a1 - a0) * k / steps;
+        pts.push(new THREE.Vector2(p.x + (p.r + rOff) * Math.cos(a), p.y + (p.r + rOff) * Math.sin(a)));
+      }
+    }
+    return pts;
+  };
+  const shape = new THREE.Shape(ring(T));
+  shape.holes.push(new THREE.Path(ring(0.0005).reverse()));
+  mesh('serpentine_belt', new THREE.ExtrudeGeometry(shape, { depth: 0.022, bevelEnabled: false }).translate(0, 0, PZ - 0.011), rubber);
+}
+
+// Dipstick
+{
+  const curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.172, 0.18, 0.12), new THREE.Vector3(-0.2, 0.3, 0.14),
+    new THREE.Vector3(-0.235, 0.45, 0.16), new THREE.Vector3(-0.24, 0.53, 0.17),
+  ]);
+  mesh('dipstick_tube', new THREE.TubeGeometry(curve, 32, 0.006, 12, false), steel);
+  mesh('dipstick_handle', new THREE.TorusGeometry(0.018, 0.005, 12, 32).rotateY(Math.PI / 2).translate(-0.24, 0.555, 0.17), accent);
+}
+
+// Coolant hose from water pump up to thermostat housing
+{
+  const curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.16, 0.47, FRONT + 0.03), new THREE.Vector3(-0.14, 0.55, FRONT + 0.02),
+    new THREE.Vector3(-0.08, 0.58, FRONT - 0.02), new THREE.Vector3(-0.07, 0.56, FRONT - 0.07),
+  ]);
+  mesh('upper_coolant_hose', new THREE.TubeGeometry(curve, 32, 0.017, 20, false), rubber);
+}
+
+stage.setObject(engine);
+</script>
+</body>
+</html>
